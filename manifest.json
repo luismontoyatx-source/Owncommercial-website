@@ -1,0 +1,10 @@
+{
+  "name": "OwnCommercial.ai",
+  "short_name": "OwnCommercial",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070b12",
+  "theme_color": "#3b82f6",
+  "description": "Commercial real estate guidance for business owners.",
+  "icons": []
+}
