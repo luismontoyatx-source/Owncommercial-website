@@ -32,11 +32,14 @@ document.getElementById("leadForm").addEventListener("submit",async function(e){
     "company",
     "property_goal",
     "property_type",
+    "preferred_area",
     "timeline",
+    "budget",
     "years_in_business",
     "business_stage",
     "financing_status",
-    "decision_process"
+    "decision_process",
+    "additional_notes"
   ];
 
   const payload = {
@@ -49,6 +52,8 @@ document.getElementById("leadForm").addEventListener("submit",async function(e){
     }
   };
 
+  console.log("HubSpot payload being sent:", JSON.stringify(payload, null, 2));
+
   try{
     const response=await fetch(HUBSPOT_ENDPOINT,{
       method:"POST",
@@ -56,8 +61,11 @@ document.getElementById("leadForm").addEventListener("submit",async function(e){
       body:JSON.stringify(payload)
     });
 
+    const responseBody = await response.text();
+    console.log("HubSpot response status:", response.status);
+    console.log("HubSpot response body:", responseBody);
+
     if(!response.ok){
-      console.error("HubSpot error:", await response.text());
       throw new Error("HubSpot rejected submission");
     }
 
