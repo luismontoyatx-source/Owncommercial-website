@@ -1,118 +1,155 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>OwnCommercial.ai</title>
-<meta name="description" content="Commercial real estate guidance for business owners.">
-<link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="styles.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<!-- Google Analytics (GA4) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-E3Y0C78PPT"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-E3Y0C78PPT');
-</script>
-</head>
-<body>
-<header>
-  <div class="brand">OwnCommercial<span>.ai</span></div>
-  <nav><a href="#intake" data-en="Get Started" data-es="Empezar">Get Started</a><a href="#contact" data-en="Contact" data-es="Contacto">Contact</a></nav>
-</header>
+(function(){
+  document.addEventListener('DOMContentLoaded', init);
 
-<section class="hero3d" id="hero3d">
-  <canvas id="b3dCanvas"></canvas>
-  <div class="hero3d-top">
-    <div class="brand">OwnCommercial<span>.ai</span></div>
-    <div class="lang">
-      <button id="btn-en" onclick="setLanguage('en')">English</button>
-      <button id="btn-es" onclick="setLanguage('es')">Español</button>
-    </div>
-  </div>
-  <div class="hero3d-intro" id="hero3dIntro">
-    <p class="eyebrow" data-en="Commercial real estate guidance for business owners" data-es="Guía de bienes raíces comerciales para dueños de negocio">Commercial real estate guidance for business owners</p>
-    <h1 data-en="Find the right commercial property for your business." data-es="Encuentre la propiedad comercial adecuada para su negocio.">Find the right commercial property for your business.</h1>
-  </div>
-  <div class="hero3d-panel" id="b3dPanel">
-    <div class="b3d-slots" id="b3dSlots"></div>
-    <div class="b3d-title" id="b3dTitle"></div>
-    <div class="b3d-swatches" id="b3dSwatches"></div>
-  </div>
-</section>
+  var TYPES = [
+    {key:'office', label:'Office'},
+    {key:'warehouse', label:'Warehouse'},
+    {key:'retail', label:'Shopping center'},
+    {key:'land', label:'Land'}
+  ];
+  var TYPE_LABELS = {office:'Office', warehouse:'Industrial / Warehouse', retail:'Retail', land:'Land'};
+  var TIERS = ['economy','standard','premium'];
 
-<section id="intake" class="section">
-  <p class="eyebrow" data-en="Property Intake" data-es="Solicitud de Propiedad">Property Intake</p>
-  <h2 data-en="Tell us what you are looking for." data-es="Cuéntenos qué está buscando.">Tell us what you are looking for.</h2>
-  <p class="sub" data-en="Only the basic fields marked with * are required." data-es="Solo los campos básicos marcados con * son obligatorios.">Only the basic fields marked with * are required.</p>
+  function imgSrc(type, tier){ return 'images/' + type + '-' + tier + '.jpg'; }
 
-  <form id="leadForm">
-    <input type="hidden" name="property_goal" id="hf_property_goal">
-    <input type="hidden" name="property_type" id="hf_property_type">
-    <input type="hidden" name="budget" id="hf_budget">
+  function init(){
+    var hero = document.getElementById('hero3d');
+    if(!hero) return;
 
-    <div class="form-block">
-      <h3 data-en="1. Property Requirements" data-es="1. Requisitos de la Propiedad">1. Property Requirements</h3>
-      <div class="grid">
-        <div><label data-en="Preferred Area" data-es="Área Preferida">Preferred Area</label><input name="preferred_area" placeholder="e.g. Katy, Cypress, Houston"></div>
-        <div><label><span data-en="Timeline" data-es="Tiempo Estimado">Timeline</span> *</label><select name="timeline" required><option value="">Select one</option><option>Immediately</option><option>Within 30 Days</option><option>1-3 Months</option><option>3-6 Months</option><option>6-12 Months</option><option>12+ Months</option><option>Just Exploring</option></select></div>
-      </div>
-    </div>
+    var layers = document.getElementById('heroLayers');
+    var grid = document.getElementById('heroGrid');
+    var introEl = document.getElementById('hero3dIntro');
+    var slotsEl = document.getElementById('b3dSlots');
+    var titleEl = document.getElementById('b3dTitle');
+    var swatchEl = document.getElementById('b3dSwatches');
+    var hf_goal = document.getElementById('hf_property_goal');
+    var hf_type = document.getElementById('hf_property_type');
+    var hf_budget = document.getElementById('hf_budget');
 
+    var imgEls = {};
+    TYPES.forEach(function(t){
+      TIERS.forEach(function(tier){
+        var img = document.createElement('img');
+        img.src = imgSrc(t.key, tier);
+        img.alt = t.label + ' - ' + tier;
+        layers.appendChild(img);
+        imgEls[t.key+'-'+tier] = img;
+      });
+    });
 
-    <div class="form-block">
-      <h3 data-en="2. Business Background" data-es="2. Información del Negocio">2. Business Background</h3>
-      <div class="grid">
-        <div><label data-en="How long have you been in business?" data-es="¿Cuánto tiempo tiene en negocio?">How long have you been in business?</label><select name="years_in_business"><option value="">Select one</option><option>Startup (Not Operating Yet)</option><option>Less Than 1 Year</option><option>1-2 Years</option><option>3-5 Years</option><option>5-10 Years</option><option>10+ Years</option></select></div>
-        <div><label data-en="Is this your first business or are you expanding?" data-es="¿Es su primer negocio o está expandiendo?">Is this your first business or are you expanding?</label><select name="business_stage"><option value="">Select one</option><option>First Business</option><option>Expanding Existing Business</option><option>Opening Additional Location</option><option>Relocating</option><option>Investor Acquisition</option><option>Franchise Expansion</option><option>Other</option></select></div>
-      </div>
-    </div>
+    var goalOptions = [
+      {v:'Buy Commercial Property', l:'Buy'},
+      {v:'Lease Commercial Space', l:'Lease'},
+      {v:'SBA Owner-User Purchase', l:'SBA purchase'},
+      {v:'Investment Property', l:'Invest'}
+    ];
+    var budgetOptions=[
+      {v:'Under $250,000', l:'Economy', tier:'economy'},
+      {v:'$500,000-$1M', l:'Standard', tier:'standard'},
+      {v:'$3M-$5M', l:'Premium', tier:'premium'}
+    ];
+    var sizeOptions=[{v:'small',l:'Under 5,000 SF'},{v:'med',l:'5,000-25,000 SF'},{v:'large',l:'25,000+ SF'}];
 
-    <div class="form-block">
-      <h3 data-en="3. Decision & Financing" data-es="3. Decisión y Financiamiento">3. Decision & Financing</h3>
-      <div class="grid">
-        <div><label data-en="Financing Status" data-es="Estado de Financiamiento">Financing Status</label><select name="financing_status"><option value="">Select one</option><option>Cash Purchase</option><option>SBA Loan</option><option>Conventional Financing</option><option>Need Financing Assistance</option><option>Owner Financing</option><option>Not Sure Yet</option></select></div>
-        <div><label data-en="Who will be involved in approving this transaction?" data-es="¿Quién estará involucrado en aprobar esta transacción?">Who will be involved in approving this transaction?</label><select name="decision_process"><option value="">Select one</option><option>I Have Full Decision-Making Authority</option><option>Business Partner Approval Required</option><option>Multiple Owners Involved</option><option>Investor Approval Required</option><option>Corporate Approval Required</option><option>Board Approval Required</option><option>Other</option></select></div>
-      </div>
-      <div><label data-en="Additional Notes" data-es="Notas Adicionales">Additional Notes</label><textarea name="additional_notes" rows="3" placeholder="e.g. Need 2 acres, outside storage, heavy power, near Beltway 8..."></textarea></div>
-    </div>
+    var state = {goal:null, type:null, tier:'economy', size:null};
 
-    <div class="form-block">
-      <h3 data-en="4. Contact Information" data-es="4. Información de Contacto">4. Contact Information</h3>
-      <div class="grid">
-        <div><label><span data-en="First Name" data-es="Nombre">First Name</span> *</label><input name="firstname" required placeholder="First name"></div>
-        <div><label><span data-en="Last Name" data-es="Apellido">Last Name</span> *</label><input name="lastname" required placeholder="Last name"></div>
-        <div><label data-en="Company" data-es="Empresa">Company</label><input name="company" placeholder="Company name"></div>
-        <div><label><span data-en="Phone" data-es="Teléfono">Phone</span> *</label><input name="mobilephone" required placeholder="Phone number"></div>
-        <div><label><span data-en="Email" data-es="Correo Electrónico">Email</span> *</label><input type="email" name="email" required placeholder="Email address"></div>
-      </div>
+    function showLayer(type, tier){
+      Object.keys(imgEls).forEach(function(k){ imgEls[k].classList.remove('active'); });
+      var key = type + '-' + tier;
+      if(imgEls[key]) imgEls[key].classList.add('active');
+    }
 
-      <button class="submit" type="submit" data-en="Submit Request" data-es="Enviar Solicitud">Submit Request</button>
-      <div id="formStatus" class="status-message" aria-live="polite"></div>
-      <p class="note" data-en="Your request will be submitted securely and saved in the CRM." data-es="Su solicitud será enviada de forma segura y guardada en el CRM.">Your request will be submitted securely and saved in the CRM.</p>
-    </div>
-  </form>
-</section>
+    function renderSlots(){
+      slotsEl.innerHTML =
+        '<span class="b3d-slot'+(state.goal?' filled':'')+'">'+((goalOptions.filter(function(o){return o.v===state.goal;})[0]||{}).l||'Goal')+'</span>' +
+        '<span class="b3d-slot'+(state.type?' filled':'')+'">'+((TYPES.filter(function(t){return t.key===state.type;})[0]||{}).label||'Type')+'</span>' +
+        '<span class="b3d-slot'+(state.size?' filled':'')+'">'+((sizeOptions.filter(function(o){return o.v===state.size;})[0]||{}).l||'Size')+'</span>' +
+        '<span class="b3d-slot'+(state.type?' filled':'')+'">'+((budgetOptions.filter(function(o){return o.tier===state.tier;})[0]||{}).l||'Budget')+'</span>';
+    }
 
-<section id="contact" class="section contact">
-  <div>
-    <p class="eyebrow" data-en="Next Steps" data-es="Próximos Pasos">Next Steps</p>
-    <h2 data-en="What Happens Next?" data-es="¿Qué Sigue?">What Happens Next?</h2>
-    <p class="sub" data-en="Thank you for your inquiry. We will review your requirements and contact you soon." data-es="Gracias por su solicitud. Revisaremos sus requisitos y nos comunicaremos pronto.">Thank you for your inquiry. We will review your requirements and contact you soon.</p>
-  </div>
-  <div class="card">
-    <h3>OwnCommercial.ai</h3>
-    <p data-en="Commercial real estate guidance for business owners." data-es="Guía de bienes raíces comerciales para dueños de negocio.">Commercial real estate guidance for business owners.</p>
-    <p><strong>Phone:</strong> 713-431-2622</p>
-    <p><strong>Email:</strong> Luis.montoya@expcommercial.com</p>
-    <p class="fine">Texas commercial real estate services subject to brokerage requirements and applicable advertising rules.</p>
-  </div>
-</section>
+    function showGoalStep(){
+      titleEl.textContent = 'What are you looking to do?';
+      swatchEl.innerHTML = goalOptions.map(function(o){
+        return '<div class="b3d-swatch'+(state.goal===o.v?' sel':'')+'" data-v="'+o.v+'">'+o.l+'</div>';
+      }).join('');
+      swatchEl.querySelectorAll('.b3d-swatch').forEach(function(el){
+        el.addEventListener('click', function(){
+          state.goal = el.getAttribute('data-v');
+          if(hf_goal) hf_goal.value = state.goal;
+          renderSlots();
+          introEl.style.opacity = '0';
+          titleEl.textContent=''; swatchEl.innerHTML='';
+          showTypeGrid();
+        });
+      });
+    }
 
-<footer>© <span id="year"></span> OwnCommercial.ai.</footer>
-<script src="builder3d.js"></script>
-<script src="script.js"></script>
-</body>
-</html>
+    function showTypeGrid(){
+      grid.innerHTML = TYPES.map(function(t){
+        return '<div class="hero-thumb" data-k="'+t.key+'"><img src="'+imgSrc(t.key,'economy')+'" alt="'+t.label+'"><div class="hero-thumb-label">'+t.label+'</div></div>';
+      }).join('');
+      grid.classList.add('show');
+      grid.querySelectorAll('.hero-thumb').forEach(function(el){
+        el.addEventListener('click', function(){
+          var k = el.getAttribute('data-k');
+          selectType(k);
+        });
+      });
+    }
+
+    function selectType(k){
+      state.type = k;
+      state.tier = 'economy';
+      if(hf_type) hf_type.value = TYPE_LABELS[k] || '';
+      grid.classList.remove('show');
+      showLayer(k, 'economy');
+      renderSlots();
+      showCustomizer();
+    }
+
+    function applyBudget(tier){
+      state.tier = tier;
+      var budgetVal = (budgetOptions.filter(function(o){return o.tier===tier;})[0]||{}).v;
+      if(hf_budget) hf_budget.value = budgetVal || '';
+      showLayer(state.type, tier);
+    }
+
+    function noteSize(){
+      var notes = document.querySelector('textarea[name="additional_notes"]');
+      if(!notes || !state.size) return;
+      var label = (sizeOptions.filter(function(o){return o.v===state.size;})[0]||{}).l;
+      var marker = 'Approx size selected: ';
+      var lines = notes.value.split('\n').filter(function(l){ return l.indexOf(marker)!==0; });
+      lines.push(marker+label);
+      notes.value = lines.join('\n').trim();
+    }
+
+    function showCustomizer(){
+      var typeLabel = (TYPES.filter(function(t){return t.key===state.type;})[0]||{}).label;
+      titleEl.textContent = 'Customize your ' + typeLabel;
+      swatchEl.innerHTML =
+        '<div style="grid-column:1/-1;font-size:12px;color:#93C5FD;margin-bottom:2px">Size</div>' +
+        sizeOptions.map(function(o){return '<div class="b3d-swatch'+(state.size===o.v?' sel':'')+'" data-g="size" data-v="'+o.v+'">'+o.l+'</div>';}).join('') +
+        '<div style="grid-column:1/-1;font-size:12px;color:#93C5FD;margin:6px 0 2px">Budget</div>' +
+        budgetOptions.map(function(o){return '<div class="b3d-swatch'+(state.tier===o.tier?' sel':'')+'" data-g="budget" data-v="'+o.tier+'">'+o.l+'</div>';}).join('') +
+        (state.size ? '<div style="grid-column:1/-1"><button type="button" class="b3d-continue" id="b3dContinue">Continue to request &#8594;</button></div>' : '');
+      swatchEl.querySelectorAll('.b3d-swatch').forEach(function(el){
+        el.addEventListener('click', function(){
+          var group = el.getAttribute('data-g'), val = el.getAttribute('data-v');
+          if(group==='size'){ state.size = val; noteSize(); }
+          if(group==='budget'){ applyBudget(val); }
+          renderSlots();
+          showCustomizer();
+        });
+      });
+      var cont = document.getElementById('b3dContinue');
+      if(cont) cont.addEventListener('click', function(){
+        var target = document.getElementById('intake');
+        if(target) target.scrollIntoView({behavior:'smooth'});
+      });
+      renderSlots();
+    }
+
+    renderSlots();
+    showGoalStep();
+  }
+})();
