@@ -1,27 +1,17 @@
 (function(){
   document.addEventListener('DOMContentLoaded', init);
   function init(){
-    var mount = document.getElementById('builder3d');
-    if(!mount || typeof THREE === 'undefined') return;
-
-    mount.innerHTML =
-      '<canvas id="b3dCanvas"></canvas>' +
-      '<div class="b3d-hint" id="b3dHint">Tap a building to select it</div>';
-    var afterCanvas = document.createElement('div');
-    afterCanvas.innerHTML =
-      '<div class="b3d-slots" id="b3dSlots"></div>' +
-      '<div class="b3d-title" id="b3dTitle"></div>' +
-      '<div class="b3d-swatches" id="b3dSwatches"></div>';
-    mount.parentNode.insertBefore(afterCanvas, mount.nextSibling);
-
+    var hero = document.getElementById('hero3d');
     var canvas = document.getElementById('b3dCanvas');
+    if(!hero || !canvas || typeof THREE === 'undefined') return;
+
     var scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x0a1220, 6, 20);
-    var camera = new THREE.PerspectiveCamera(42, canvas.clientWidth/canvas.clientHeight || 1, 0.1, 100);
+    scene.fog = new THREE.Fog(0x0a1220, 7, 24);
+    var camera = new THREE.PerspectiveCamera(42, hero.clientWidth/hero.clientHeight || 1, 0.1, 100);
     var renderer = new THREE.WebGLRenderer({canvas:canvas, antialias:true, alpha:true});
     renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
     function fit(){
-      var w = mount.clientWidth, h = mount.clientHeight;
+      var w = hero.clientWidth, h = hero.clientHeight;
       renderer.setSize(w,h,false);
       camera.aspect = w/h;
       camera.updateProjectionMatrix();
@@ -69,13 +59,13 @@
       }
       var tex = new THREE.CanvasTexture(c);
       tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-      tex.repeat.set(4,4);
+      tex.repeat.set(6,6);
       return tex;
     }
     var concreteTex = noiseTex(128,150,26); concreteTex.repeat.set(3,3);
     var groundTex = asphaltTex();
 
-    var floor = new THREE.Mesh(new THREE.PlaneGeometry(40,40), new THREE.MeshStandardMaterial({map:groundTex, roughness:0.95}));
+    var floor = new THREE.Mesh(new THREE.PlaneGeometry(60,60), new THREE.MeshStandardMaterial({map:groundTex, roughness:0.95}));
     floor.rotation.x=-Math.PI/2; floor.position.y=-0.006; scene.add(floor);
 
     function shadowDisc(r){
@@ -89,14 +79,13 @@
       m.rotation.x=-Math.PI/2; m.position.y=0.011;
       return m;
     }
-
-    function windowGrid(w,h,z,cols,rows,lit){
+    function windowGrid(w,h,z,cols,rows){
       var g=new THREE.Group();
       var mLit = new THREE.MeshStandardMaterial({color:0x9fd4ff, emissive:0x3B82F6, emissiveIntensity:0.5, roughness:0.15, metalness:0.6});
       var mDim = new THREE.MeshStandardMaterial({color:0x1a2740, emissive:0x14203a, emissiveIntensity:0.15, roughness:0.2, metalness:0.5});
       var padX=w/cols, padY=h/rows, ww=padX*0.62, wh=padY*0.55;
       for(var c=0;c<cols;c++) for(var r=0;r<rows;r++){
-        var isLit = lit===false ? false : Math.random()>0.3;
+        var isLit = Math.random()>0.3;
         var win = new THREE.Mesh(new THREE.BoxGeometry(ww,wh,0.03), isLit?mLit:mDim);
         win.position.set(-w/2+padX*(c+0.5), padY*(r+0.55), z);
         g.add(win);
@@ -119,18 +108,17 @@
       var base = new THREE.Mesh(new THREE.BoxGeometry(w*1.2,0.3,d*1.2), concreteMat); base.position.y=0.15; g.add(base);
       var door = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.4,0.03), new THREE.MeshStandardMaterial({color:0x9fd4ff, emissive:0x3B82F6, emissiveIntensity:0.4})); door.position.set(0,0.2,d/2+0.02); g.add(door);
       g.add(shadowDisc(3.2));
-      g.userData.body = body; g.userData.trim = [cap,base];
+      g.userData.body = body; g.userData.topY = h+0.55;
       g.userData.extent = {w:w*1.7,h:h,d:d*1.7};
       return g;
     }
     function makeWarehouse(){
       var g=new THREE.Group(); var w=3.2,d=2.2,h=1.1;
       var body = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), concreteMat); body.position.y=h/2; g.add(body);
-      var dm = trimMat;
-      for(var i=0;i<4;i++){var dock=new THREE.Mesh(new THREE.BoxGeometry(0.45,0.4,0.03),dm);dock.position.set(-w/2+(i+0.5)*(w/4),0.3,d/2+0.02);g.add(dock);}
+      for(var i=0;i<4;i++){var dock=new THREE.Mesh(new THREE.BoxGeometry(0.45,0.4,0.03),trimMat);dock.position.set(-w/2+(i+0.5)*(w/4),0.3,d/2+0.02);g.add(dock);}
       var stripe = new THREE.Mesh(new THREE.BoxGeometry(w*1.02,0.06,0.1), trimMat); stripe.position.set(0,h*0.85,d/2+0.02); g.add(stripe);
       g.add(shadowDisc(3.0));
-      g.userData.body = body; g.userData.trim=[stripe];
+      g.userData.body = body; g.userData.topY = h+0.5;
       g.userData.extent = {w:w*1.3,h:h,d:d*1.7};
       return g;
     }
@@ -141,7 +129,7 @@
       var canopy = new THREE.Mesh(new THREE.BoxGeometry(w*1.02,0.06,0.32), trimMat); canopy.position.set(0,h*0.7,d/2+0.16); g.add(canopy);
       g.add(windowGrid(w*0.95,h*0.55,d/2+0.02,6,1));
       g.add(shadowDisc(3.4));
-      g.userData.body = body; g.userData.trim=[canopy];
+      g.userData.body = body; g.userData.topY = h+0.5;
       g.userData.extent = {w:w*1.7,h:h,d:d*2.3};
       return g;
     }
@@ -155,7 +143,7 @@
         g.add(post);
       }
       g.add(shadowDisc(3.0));
-      g.userData.body = plot; g.userData.trim=[];
+      g.userData.body = plot; g.userData.topY = 0.6;
       g.userData.extent = {w:3.4,h:0.5,d:2.8};
       return g;
     }
@@ -167,18 +155,75 @@
       {key:'retail', label:'Shopping center', make:makeRetail, x:2.5},
       {key:'land', label:'Land', make:makeLand, x:6}
     ];
-    buildings.forEach(function(b){ b.group=b.make(); b.group.position.x=b.x; scene.add(b.group); });
+    buildings.forEach(function(b){
+      b.group=b.make(); b.group.position.x=b.x; scene.add(b.group);
+      var el = document.createElement('div');
+      el.className='b3d-label';
+      el.textContent = b.label;
+      hero.appendChild(el);
+      b.labelEl = el;
+    });
 
     var ro = new ResizeObserver(function(){ fit(); });
-    ro.observe(mount);
+    ro.observe(hero);
     fit();
 
     var camTarget = new THREE.Vector3(0,1,0);
-    camera.position.set(0,4.6,11.5);
+    camera.position.set(0,4.8,12.5);
     camera.lookAt(camTarget);
 
-    var selected=null, animState=null;
-    var hint = document.getElementById('b3dHint');
+    var selected=null, animState=null, phase='goal';
+    var hf_goal = document.getElementById('hf_property_goal');
+    var hf_type = document.getElementById('hf_property_type');
+    var hf_budget = document.getElementById('hf_budget');
+    var introEl = document.getElementById('hero3dIntro');
+    var slotsEl = document.getElementById('b3dSlots');
+    var titleEl = document.getElementById('b3dTitle');
+    var swatchEl = document.getElementById('b3dSwatches');
+
+    var goalOptions = [
+      {v:'Buy Commercial Property', l:'Buy'},
+      {v:'Lease Commercial Space', l:'Lease'},
+      {v:'SBA Owner-User Purchase', l:'SBA purchase'},
+      {v:'Investment Property', l:'Invest'}
+    ];
+    var sizeOptions=[{v:'small',l:'Under 5,000 SF'},{v:'med',l:'5,000-25,000 SF'},{v:'large',l:'25,000+ SF'}];
+    var budgetOptions=[{v:'Under $250,000',l:'Under $250K'},{v:'$500,000-$1M',l:'$500K-$1M'},{v:'$3M-$5M',l:'$3M-$5M+'}];
+    var sizeMul={small:0.72,med:1,large:1.35};
+    var finishColors={'Under $250,000':0x9a9a92,'$500,000-$1M':0x3B82F6,'$3M-$5M':0xeef1f2};
+    var custom={goal:null,size:null,budget:null};
+
+    function renderSlots(){
+      slotsEl.innerHTML =
+        '<span class="b3d-slot'+(custom.goal?' filled':'')+'">'+((goalOptions.filter(function(o){return o.v===custom.goal;})[0]||{}).l||'Goal')+'</span>' +
+        '<span class="b3d-slot'+(selected?' filled':'')+'">'+(selected?selected.label:'Type')+'</span>' +
+        '<span class="b3d-slot'+(custom.size?' filled':'')+'">'+((sizeOptions.filter(function(o){return o.v===custom.size;})[0]||{}).l||'Size')+'</span>' +
+        '<span class="b3d-slot'+(custom.budget?' filled':'')+'">'+((budgetOptions.filter(function(o){return o.v===custom.budget;})[0]||{}).l||'Budget')+'</span>';
+    }
+
+    var hintEl = document.createElement('div');
+    hintEl.className='b3d-hint';
+    hintEl.textContent='Tap a building to select it';
+    hintEl.style.display='none';
+    hero.appendChild(hintEl);
+
+    function showGoalStep(){
+      titleEl.textContent = 'What are you looking to do?';
+      swatchEl.innerHTML = goalOptions.map(function(o){
+        return '<div class="b3d-swatch'+(custom.goal===o.v?' sel':'')+'" data-v="'+o.v+'">'+o.l+'</div>';
+      }).join('');
+      swatchEl.querySelectorAll('.b3d-swatch').forEach(function(el){
+        el.addEventListener('click', function(){
+          custom.goal = el.getAttribute('data-v');
+          if(hf_goal) hf_goal.value = custom.goal;
+          renderSlots();
+          phase='pick';
+          introEl.style.opacity='0';
+          hintEl.style.display='block';
+          titleEl.textContent=''; swatchEl.innerHTML='';
+        });
+      });
+    }
 
     function raycastSelect(clientX, clientY){
       var rect = canvas.getBoundingClientRect();
@@ -190,34 +235,24 @@
       return hits.length ? hits[0].object.userData.parentKey : null;
     }
     canvas.addEventListener('click', function(e){
-      if(selected) return;
-      var key = raycastSelect(e.clientX, e.clientY);
-      if(key) selectBuilding(key);
+      if(phase!=='pick') return;
+      var k = raycastSelect(e.clientX, e.clientY);
+      if(k) selectBuilding(k);
     });
 
-    var hfType = document.getElementById('hf_property_type');
-    var hfBudget = document.getElementById('hf_budget');
-
-    function selectBuilding(key){
-      selected = buildings.filter(function(b){return b.key===key;})[0];
-      hint.style.display='none';
-      if(hfType) hfType.value = TYPE_LABELS[key] || '';
+    function selectBuilding(k){
+      selected = buildings.filter(function(b){return b.key===k;})[0];
+      hintEl.style.display='none';
+      if(hf_type) hf_type.value = TYPE_LABELS[k] || '';
       var extent = selected.group.userData.extent;
       var toPos = new THREE.Vector3(selected.x+extent.w*0.55, extent.h*1.05+1, extent.d*0.85+1);
       var toTarget = new THREE.Vector3(selected.x, extent.h*0.35, 0);
       animState = {toPos:toPos, fromPos:camera.position.clone(), toTarget:toTarget, fromTarget:camTarget.clone(), dur:900, startTime:performance.now()};
-      buildings.forEach(function(b){ if(b.key!==key) b.fadeOut=true; });
+      buildings.forEach(function(b){ if(b.key!==k){ b.fadeOut=true; b.labelEl.style.opacity='0'; } });
+      phase='customize';
+      renderSlots();
       showCustomizer();
     }
-
-    var slotsEl = document.getElementById('b3dSlots');
-    var titleEl = document.getElementById('b3dTitle');
-    var swatchEl = document.getElementById('b3dSwatches');
-    var sizeOptions=[{v:'small',l:'Under 5,000 SF'},{v:'med',l:'5,000-25,000 SF'},{v:'large',l:'25,000+ SF'}];
-    var budgetOptions=[{v:'Under $250,000',l:'Under $250K'},{v:'$500,000-$1M',l:'$500K-$1M'},{v:'$3M-$5M',l:'$3M-$5M+'}];
-    var sizeMul={small:0.72,med:1,large:1.35};
-    var finishColors={'Under $250,000':0x9a9a92,'$500,000-$1M':0x3B82F6,'$3M-$5M':0xeef1f2};
-    var custom={size:null,budget:null};
 
     function applySize(){
       if(!selected) return;
@@ -226,7 +261,7 @@
     }
     function applyBudget(){
       if(!selected || !custom.budget) return;
-      if(hfBudget) hfBudget.value = custom.budget;
+      if(hf_budget) hf_budget.value = custom.budget;
       var color = finishColors[custom.budget];
       if(selected.group.userData.body && selected.group.userData.body.material && selected.group.userData.body.material.color){
         selected.group.userData.body.material.color.setHex(color);
@@ -242,23 +277,14 @@
       notes.value = lines.join('\n').trim();
     }
 
-    function renderSlots(){
-      var typeVal = hfType ? hfType.value : '';
-      var budgetLabel = custom.budget ? (budgetOptions.filter(function(o){return o.v===custom.budget;})[0]||{}).l : '';
-      var sizeLabel = custom.size ? (sizeOptions.filter(function(o){return o.v===custom.size;})[0]||{}).l : '';
-      slotsEl.innerHTML =
-        '<span class="b3d-slot'+(typeVal?' filled':'')+'">'+(typeVal||'Type')+'</span>' +
-        '<span class="b3d-slot'+(custom.size?' filled':'')+'">'+(sizeLabel||'Size')+'</span>' +
-        '<span class="b3d-slot'+(custom.budget?' filled':'')+'">'+(budgetLabel||'Budget')+'</span>';
-    }
-
     function showCustomizer(){
       titleEl.textContent = 'Customize your ' + selected.label;
       swatchEl.innerHTML =
         '<div style="grid-column:1/-1;font-size:12px;color:#93C5FD;margin-bottom:2px">Size</div>' +
         sizeOptions.map(function(o){return '<div class="b3d-swatch'+(custom.size===o.v?' sel':'')+'" data-g="size" data-v="'+o.v+'">'+o.l+'</div>';}).join('') +
         '<div style="grid-column:1/-1;font-size:12px;color:#93C5FD;margin:6px 0 2px">Budget</div>' +
-        budgetOptions.map(function(o){return '<div class="b3d-swatch'+(custom.budget===o.v?' sel':'')+'" data-g="budget" data-v="'+o.v+'">'+o.l+'</div>';}).join('');
+        budgetOptions.map(function(o){return '<div class="b3d-swatch'+(custom.budget===o.v?' sel':'')+'" data-g="budget" data-v="'+o.v+'">'+o.l+'</div>';}).join('') +
+        (custom.size && custom.budget ? '<div style="grid-column:1/-1"><button type="button" class="b3d-continue" id="b3dContinue">Continue to request &#8594;</button></div>' : '');
       swatchEl.querySelectorAll('.b3d-swatch').forEach(function(el){
         el.addEventListener('click', function(){
           var group = el.getAttribute('data-g'), val = el.getAttribute('data-v');
@@ -269,7 +295,25 @@
           showCustomizer();
         });
       });
+      var cont = document.getElementById('b3dContinue');
+      if(cont) cont.addEventListener('click', function(){
+        var target = document.getElementById('intake');
+        if(target) target.scrollIntoView({behavior:'smooth'});
+      });
       renderSlots();
+    }
+
+    function updateLabels(){
+      buildings.forEach(function(b){
+        if(b.fadeOut) return;
+        var pos = new THREE.Vector3(b.x, b.group.userData.topY, 0);
+        pos.project(camera);
+        var x = (pos.x*0.5+0.5)*hero.clientWidth;
+        var y = (-pos.y*0.5+0.5)*hero.clientHeight;
+        b.labelEl.style.left = x+'px';
+        b.labelEl.style.top = y+'px';
+        b.labelEl.style.opacity = pos.z < 1 ? '1' : '0';
+      });
     }
 
     function animate(now){
@@ -289,8 +333,12 @@
           b.group.rotation.y += 0.003;
         }
       });
+      updateLabels();
       renderer.render(scene, camera);
     }
     requestAnimationFrame(animate);
+
+    renderSlots();
+    showGoalStep();
   }
 })();
