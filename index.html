@@ -51,6 +51,21 @@
     var sizeOptions=[{v:'small',l:'Under 5,000 SF'},{v:'med',l:'5,000-25,000 SF'},{v:'large',l:'25,000+ SF'}];
 
     var state = {goal:null, type:null, tier:'economy', size:null};
+    var cycleTimer = null;
+    var cycleIndex = 0;
+    var cycleTypes = ['office','warehouse','retail','land'];
+
+    function startCycle(){
+      stopCycle();
+      showLayer(cycleTypes[cycleIndex], 'standard');
+      cycleTimer = setInterval(function(){
+        cycleIndex = (cycleIndex + 1) % cycleTypes.length;
+        showLayer(cycleTypes[cycleIndex], 'standard');
+      }, 4000);
+    }
+    function stopCycle(){
+      if(cycleTimer){ clearInterval(cycleTimer); cycleTimer = null; }
+    }
 
     function showLayer(type, tier){
       Object.keys(imgEls).forEach(function(k){ imgEls[k].classList.remove('active'); });
@@ -75,7 +90,7 @@
 
     function showGoalStep(){
       state.type = null;
-      hideAllLayers();
+      startCycle();
       grid.classList.remove('show');
       introEl.style.opacity = '1';
       titleEl.textContent = 'What are you looking to do?';
@@ -96,7 +111,7 @@
 
     function showTypeGrid(){
       state.type = null;
-      hideAllLayers();
+      stopCycle();
       titleEl.innerHTML = backButtonHtml();
       swatchEl.innerHTML = '';
       document.getElementById('b3dBack').addEventListener('click', showGoalStep);
